@@ -7,6 +7,7 @@ services:
       - .env
     volumes:
       - ./data:/app/data
+      - ./account_mapping.json:/app/account_mapping.json:ro
     networks:
       - caddy_default
     expose:
