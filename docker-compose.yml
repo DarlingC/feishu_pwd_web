@@ -6,12 +6,15 @@ services:
     env_file:
       - .env
     volumes:
-      - ./data:/app/data
+      - db_data:/app/data
       - ./account_mapping.json:/app/account_mapping.json:ro
     networks:
       - caddy_default
     expose:
       - "5002"
+
+volumes:
+  db_data:
 
 networks:
   caddy_default:
