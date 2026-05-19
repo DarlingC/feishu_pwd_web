@@ -338,7 +338,7 @@
 
         function showHome(user) {
             currentUser = user;
-            const adUsername = user.email ? user.email.split('@')[0] : '';
+            const adUsername = user.ad_account || '请联系IT';
 
             document.getElementById('app').innerHTML = `
                 <div class="container">

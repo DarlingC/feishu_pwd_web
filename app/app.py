@@ -240,8 +240,12 @@ def get_user_info():
                 session['user_id'] = user.get('user_id')
                 session['email'] = user.get('email')
                 session['user_name'] = user.get('name')
+
+                # 计算 AD 账号（应用邮箱前缀映射规则）
+                ad_account = get_user_account(user.get('email'))
+
                 logger.info(f"用户已授权登录: {user.get('name')} ({user.get('user_id')})")
-                return jsonify({'success': True, 'data': user})
+                return jsonify({'success': True, 'data': {**user, 'ad_account': ad_account}})
 
             return jsonify({'error': '获取用户信息失败'}), 401
 
@@ -255,7 +259,7 @@ def get_user_info():
 # ==================== AD 密码相关接口 ====================
 
 def load_account_mapping():
-    """从配置文件加载 user_id -> AD账号 的映射"""
+    """从配置文件加载 邮箱前缀 -> AD账号 的映射"""
     mapping_path = os.environ.get('ACCOUNT_MAPPING_FILE', '')
     if not mapping_path or not os.path.exists(mapping_path):
         return {}
@@ -267,12 +271,16 @@ def load_account_mapping():
         return {}
 
 
-def get_user_account(user_id: str, email: str) -> str:
-    """获取用户的AD账号，优先从映射文件查找，否则取邮箱前缀"""
+def get_user_account(email: str) -> str:
+    """获取用户的AD账号，优先从映射文件查找（使用邮箱前缀），否则取邮箱前缀"""
+    email_prefix = email.split('@')[0] if email else ''
+    if not email_prefix:
+        return ''
+    
     mapping = load_account_mapping()
-    if user_id in mapping:
-        return mapping[user_id]
-    return email.split('@')[0] if email else ''
+    if email_prefix in mapping:
+        return mapping[email_prefix]
+    return email_prefix
 
 
 @app.route('/api/ad/password/reset', methods=['POST'])
@@ -301,7 +309,7 @@ def reset_password():
     user_id = session['user_id']
     user_name = session['user_name']
     email = session.get('email', '')
-    user_account = get_user_account(user_id, email)
+    user_account = get_user_account(email)
 
     if not user_account:
         return jsonify({'error': '无法获取用户账号信息'}), 400
@@ -327,7 +335,7 @@ def query_password():
     # 强制从 Session 中获取可信信息
     user_id = session['user_id']
     email = session.get('email', '')
-    user_account = email.split('@')[0] if email else ''
+    user_account = get_user_account(email)
 
     if not user_id or not user_account:
         return jsonify({'error': '无法识别用户身份'}), 400
