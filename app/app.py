@@ -253,6 +253,27 @@ def get_user_info():
 
 # ==================== AD 密码相关接口 ====================
 
+def load_account_mapping():
+    """从配置文件加载 user_id -> AD账号 的映射"""
+    mapping_path = os.environ.get('ACCOUNT_MAPPING_FILE', '')
+    if not mapping_path or not os.path.exists(mapping_path):
+        return {}
+    try:
+        with open(mapping_path, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except Exception as e:
+        logger.warning(f'加载账号映射文件失败: {e}')
+        return {}
+
+
+def get_user_account(user_id: str, email: str) -> str:
+    """获取用户的AD账号，优先从映射文件查找，否则取邮箱前缀"""
+    mapping = load_account_mapping()
+    if user_id in mapping:
+        return mapping[user_id]
+    return email.split('@')[0] if email else ''
+
+
 @app.route('/api/ad/password/reset', methods=['POST'])
 def reset_password():
     """重置 AD 密码"""
@@ -279,7 +300,7 @@ def reset_password():
     user_id = session['user_id']
     user_name = session['user_name']
     email = session.get('email', '')
-    user_account = email.split('@')[0] if email else None
+    user_account = get_user_account(user_id, email)
 
     if not user_account:
         return jsonify({'error': '无法获取用户账号信息'}), 400
