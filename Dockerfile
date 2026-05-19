@@ -15,7 +15,6 @@ RUN groupadd -r appuser && useradd -r -g appuser -d /app -s /sbin/nologin appuse
 
 # 复制代码
 COPY app/ ./app/
-COPY public/ ./public/
 
 # 创建数据目录并设置权限
 RUN mkdir -p /app/data && chown -R appuser:appuser /app

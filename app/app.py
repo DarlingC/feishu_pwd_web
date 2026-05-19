@@ -13,7 +13,6 @@ from ldap3 import ALL, Connection, MODIFY_REPLACE, Server
 from ldap3.core.exceptions import LDAPException
 from ldap3.utils.conv import escape_filter_chars  # 引入转义方法
 
-
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s [%(levelname)s] %(message)s',
@@ -420,11 +419,12 @@ def index():
     return response
 
 
+with app.app_context():
+    init_db()
+
 # ==================== 启动应用 ====================
 
 if __name__ == '__main__':
-    init_db()
-
     host = os.getenv('FLASK_HOST', '0.0.0.0')
     port = int(os.getenv('FLASK_PORT', 5002))
 
