@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>加载中...</title>
-    <!-- CSS 样式保持不变 -->
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         html, body {
@@ -12,7 +11,6 @@
             width: 100%;
         }
 
-        /* 桌面端：灰色背景 + 白卡片居中 */
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background-color: #f0f2f5;
@@ -30,16 +28,9 @@
             border-radius: 12px;
             box-shadow: 0 2px 12px rgba(0,0,0,0.1);
             padding: 32px;
-            display: flex;
-            gap: 32px;
-        }
-        .section { flex: 1; min-width: 0; }
-        .section + .section {
-            padding-left: 32px;
-            border-left: 1px solid #e8e8e8;
         }
 
-        /* 手机端：无背景无卡片，顶部对齐，禁止滚动 */
+        /* 手机端 */
         @media (max-width: 640px) {
             html, body { overflow: hidden; }
             body {
@@ -55,22 +46,14 @@
                 box-shadow: none;
                 padding: 0;
             }
-            .section + .section {
-                margin-top: 20px;
-                padding-top: 20px;
-                border-top: 1px solid #e8e8e8;
-                padding-left: 0;
-                border-left: none;
-            }
-            /* 手机端保持 16px 防止 iOS 输入框自动缩放 */
             .form-group input { font-size: 16px; }
         }
-        .account-info {
-            font-size: 15px;
-            color: #666;
-            margin-bottom: 12px;
+        .welcome {
+            font-size: 17px;
+            color: #333;
+            margin-bottom: 20px;
         }
-        .account-info strong { color: #333; }
+        .welcome strong { color: #1890ff; }
         .section-title { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
         .section-desc { font-size: 14px; color: #999; margin-bottom: 14px; }
         .form-group { margin-bottom: 16px; }
@@ -128,6 +111,7 @@
         .btn-primary { background-color: #1890ff; color: white; }
         .btn-primary:disabled { background-color: #d9d9d9; cursor: not-allowed; }
         .btn-outline { background-color: white; border: 1px solid #d9d9d9; color: #333; }
+        .btn-outline:disabled { background-color: #f5f5f5; color: #d9d9d9; cursor: not-allowed; }
         .alert { padding: 10px 12px; border-radius: 6px; font-size: 14px; margin-bottom: 12px; }
         .alert-error { background-color: #fff2f0; border: 1px solid #ffccc7; color: #ff4d4f; }
         .alert-success { background-color: #f6ffed; border: 1px solid #b7eb8f; color: #52c41a; }
@@ -145,13 +129,20 @@
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         .loading p { margin-top: 16px; color: #666; }
         .error-page { text-align: center; padding: 48px 24px; }
-        .error-page h2 { color: #ff4d4f; margin-bottom: 8px; }
-        .error-page p { color: #666; font-size: 14px; }
-        .hint { margin-top: 16px; padding: 12px; background: #f5f5f5; border-radius: 6px; font-size: 12px; color: #999; }
+        .error-page h2 { color: #ff4d4f; font-size: 20px; margin-bottom: 12px; }
+        .error-page p { color: #666; font-size: 16px; line-height: 1.6; }
+        .hint { margin-top: 16px; padding: 12px; background: #f5f5f5; border-radius: 6px; font-size: 14px; color: #999; }
         .update-time { font-size: 12px; color: #999; margin-top: 6px; }
         .validation-msg { font-size: 12px; margin-top: 3px; }
         .validation-msg.error { color: #ff4d4f; }
         .validation-msg.success { color: #52c41a; }
+        .divider { border-top: 1px solid #e8e8e8; margin: 20px 0; }
+        .action-buttons { display: flex; gap: 12px; }
+        .action-buttons .btn { flex: 1; }
+        .reset-section { display: none; margin-top: 20px; }
+        .reset-section.visible { display: block; }
+        .account-info { font-size: 15px; color: #666; margin-bottom: 12px; }
+        .account-info strong { color: #333; }
     </style>
 </head>
 <body>
@@ -173,13 +164,11 @@
                 .replace(/'/g, '&#39;');
         }
 
-        // 检测是否在飞书环境中
         function isFeishuEnvironment() {
             const ua = navigator.userAgent.toLowerCase();
             return ua.includes('lark') || ua.includes('feishu');
         }
 
-        // 等待 JSSDK 加载
         function waitForSDK(maxWait = 3000) {
             return new Promise((resolve) => {
                 const startTime = Date.now();
@@ -196,7 +185,6 @@
             });
         }
 
-        // 获取飞书用户信息
         async function getFeishuUser() {
             if (!isFeishuEnvironment()) {
                 throw new Error('请在飞书应用内打开本页面');
@@ -251,10 +239,16 @@
         }
 
         function showError(message) {
-            document.getElementById('app').innerHTML = '<div class="container" style="justify-content:center;align-items:center;"><div class="error-page"><h2>出错了</h2><p>' + escapeHtml(message) + '</p></div></div>';
+            document.getElementById('app').innerHTML =
+                '<div class="container">' +
+                    '<div class="error-page">' +
+                        '<h2>出错了</h2>' +
+                        '<p>' + escapeHtml(message) + '</p>' +
+                        '<div class="hint">请确保从飞书应用入口访问此页面</div>' +
+                    '</div>' +
+                '</div>';
         }
 
-        // 验证密码复杂度
         function validatePassword(password) {
             const errors = [];
 
@@ -319,6 +313,17 @@
                 return false;
             }
 
+            // 先检查第一个密码是否满足复杂度
+            const newPwdValid = validatePassword(newPwd).valid;
+            if (!newPwdValid && newPwd) {
+                hint.textContent = '请先满足新密码复杂度要求';
+                hint.classList.remove('success');
+                hint.classList.add('error');
+                input.classList.remove('success');
+                input.classList.add('error');
+                return false;
+            }
+
             if (confirmPwd !== newPwd) {
                 hint.textContent = '密码不一致';
                 hint.classList.remove('success');
@@ -342,12 +347,21 @@
 
             document.getElementById('app').innerHTML = `
                 <div class="container">
-                    <div class="section">
-                        <div class="section-title">重置密码</div>
+                    <div class="welcome">欢迎，<strong>${escapeHtml(user.name)}</strong></div>
+
+                    <div id="reset-alert"></div>
+
+                    <div class="action-buttons">
+                        <button class="btn btn-outline" id="query-btn">查询密码</button>
+                        <button class="btn btn-primary" id="show-reset-btn">修改密码</button>
+                    </div>
+
+                    <div class="reset-section" id="reset-section">
+                        <div class="divider"></div>
+                        <div class="section-title">修改密码</div>
                         <div class="section-desc">下边账号应与 WiFi: Source-Unifi 登录账号相同，如有问题请联系王晨</div>
-                        <div id="reset-alert"></div>
+                        <div class="account-info">账号：<strong id="ad-username"></strong></div>
                         <form id="reset-form">
-                            <div class="account-info">账号：<strong id="ad-username"></strong></div>
                             <div class="form-group">
                                 <label>新密码</label>
                                 <div class="input-wrapper">
@@ -364,16 +378,11 @@
                                 </div>
                                 <div class="validation-msg" id="confirm-hint"></div>
                             </div>
-                            <button type="submit" class="btn btn-primary" id="reset-btn" disabled>重置密码</button>
+                            <button type="submit" class="btn btn-primary" id="reset-btn" disabled>修改密码</button>
                         </form>
                     </div>
 
-                    <div class="section">
-                        <div class="section-title">查询密码</div>
-                        <div class="section-desc">查询你的密码</div>
-                        <button class="btn btn-outline" id="query-btn">查询密码</button>
-                        <div id="query-result"></div>
-                    </div>
+                    <div id="query-result"></div>
                 </div>
             `;
 
@@ -382,11 +391,20 @@
             if (!adUsername) {
                 document.getElementById('reset-alert').innerHTML =
                     '<div class="alert alert-error">未能获取邮箱前缀</div>';
-                document.getElementById('reset-btn').disabled = true;
-                document.getElementById('new-password').disabled = true;
-                document.getElementById('confirm-password').disabled = true;
-                document.getElementById('query-btn').disabled = true;
+                document.getElementById('show-reset-btn').disabled = true;
             }
+
+            // 修改密码按钮：展开/收起
+            document.getElementById('show-reset-btn').addEventListener('click', function() {
+                const section = document.getElementById('reset-section');
+                if (section.classList.contains('visible')) {
+                    section.classList.remove('visible');
+                    this.textContent = '修改密码';
+                } else {
+                    section.classList.add('visible');
+                    this.textContent = '收起';
+                }
+            });
 
             document.querySelectorAll('.toggle-btn').forEach(btn => {
                 btn.addEventListener('click', function() {
@@ -480,7 +498,7 @@
                 const data = await res.json();
 
                 if (data.success) {
-                    alertEl.innerHTML = '<div class="alert alert-success">密码重置成功</div>';
+                    alertEl.innerHTML = '<div class="alert alert-success">密码修改成功</div>';
                     document.getElementById('new-password').value = '';
                     document.getElementById('confirm-password').value = '';
                     document.getElementById('new-hint').textContent = '';
@@ -495,7 +513,7 @@
                 alertEl.innerHTML = '<div class="alert alert-error">请求失败，请稍后重试</div>';
             } finally {
                 btn.disabled = false;
-                btn.textContent = '重置密码';
+                btn.textContent = '修改密码';
                 updateResetButton();
             }
         }
@@ -529,14 +547,14 @@
                         </div>
                     `;
                     document.getElementById('query-password').value = p.password;
-                    document.getElementById('update-time').textContent = '最后重置时间：' + new Date(p.updatedAt).toLocaleString('zh-CN');
+                    document.getElementById('update-time').textContent = '最后修改时间：' + new Date(p.updatedAt).toLocaleString('zh-CN');
 
                     document.getElementById('toggle-query-btn').addEventListener('click', function() {
                         togglePassword('query-password');
                     });
                     document.getElementById('copy-btn').addEventListener('click', copyPassword);
                 } else {
-                    resultDiv.innerHTML = '<div class="alert alert-error">' + escapeHtml(data.error || '请在本页面重置密码后再查询') + '</div>';
+                    resultDiv.innerHTML = '<div class="alert alert-error">' + escapeHtml(data.error || '请在本页面修改密码后再查询') + '</div>';
                 }
             } catch (err) {
                 resultDiv.innerHTML = '<div class="alert alert-error">查询失败，请稍后重试</div>';
@@ -551,7 +569,6 @@
             const btn = document.getElementById('copy-btn');
 
             if (!input || !btn) {
-                console.error('找不到密码输入框或复制按钮');
                 return;
             }
 
@@ -577,7 +594,6 @@
                     btn.classList.remove('copied');
                 }, 2000);
             } catch (err) {
-                console.error('复制失败:', err);
                 alert('复制失败，请手动复制');
             }
         }
