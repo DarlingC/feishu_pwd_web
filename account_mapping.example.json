@@ -1,4 +1,4 @@
 {
-    "ou_xxxxxxxx": "zhangsan",
-    "ou_yyyyyyyy": "lisi"
+    "飞书工作邮箱前缀": "AD对应sAMAccountName",
+    "test": "lisi"
 }
