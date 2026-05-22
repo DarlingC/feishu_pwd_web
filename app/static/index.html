@@ -389,12 +389,12 @@
                     </div>
                     <div class="account-info">账号:<strong id="ad-username"></strong><button class="account-copy-btn" id="account-copy-btn">复制</button></div>
 
+                    <div id="reset-success-hint"></div>
                     <button class="btn btn-outline" id="query-btn">查询密码</button>
                     <div class="query-hint" id="query-hint"></div>
                     <button class="btn btn-outline" id="reset-btn-full" style="display:none;">重置密码</button>
                     <button class="reset-link-btn" id="show-reset-btn">修改密码</button>
                     <div style="clear: both;"></div>
-                    <div id="reset-success-hint"></div>
 
                     <div id="query-result"></div>
 
@@ -461,13 +461,46 @@
             // 修改密码按钮：展开/收起
             document.getElementById('show-reset-btn').addEventListener('click', function() {
                 const section = document.getElementById('reset-section');
+                const resultDiv = document.getElementById('query-result');
                 if (section.classList.contains('visible')) {
+                    // 返回：重置到首页初始状态
                     section.classList.remove('visible');
-                    this.textContent = noPasswordMode ? '重置密码' : '修改密码';
+                    queryPerformed = false;
+                    noPasswordMode = false;
+                    document.getElementById('query-btn').style.display = '';
+                    document.getElementById('reset-btn-full').style.display = 'none';
+                    document.getElementById('query-hint').innerHTML = '';
+                    document.getElementById('query-hint').style.display = '';
+                    document.getElementById('reset-success-hint').innerHTML = '';
                     document.getElementById('reset-alert').innerHTML = '';
+                    resultDiv.innerHTML = '';
+                    resultDiv.style.display = '';
+                    document.querySelector('.account-info').style.marginBottom = '';
+                    // 恢复 show-reset-btn 到原位
+                    const resetFull = document.getElementById('reset-btn-full');
+                    resetFull.parentNode.insertBefore(this, resetFull.nextSibling);
+                    this.removeAttribute('style');
+                    this.className = 'reset-link-btn';
+                    this.textContent = '修改密码';
+                    document.getElementById('reset-btn-container').innerHTML = '';
+                    document.getElementById('reset-btn-container').style.marginTop = '';
+                    document.getElementById('reset-section').querySelector('.section-title').textContent = '修改密码';
+                    document.getElementById('reset-btn').textContent = '修改密码';
                 } else {
+                    // 展开：隐藏查询按钮和密码展示
                     section.classList.add('visible');
-                    this.textContent = '收起';
+                    document.getElementById('query-btn').style.display = 'none';
+                    if (queryPerformed && !noPasswordMode) {
+                        resultDiv.style.display = 'none';
+                    }
+                    // 移动按钮到右下角容器
+                    if (!queryPerformed) {
+                        document.getElementById('reset-btn-container').appendChild(this);
+                        document.querySelector('.account-info').style.marginBottom = '6px';
+                        document.getElementById('query-hint').style.display = 'none';
+                    }
+                    document.getElementById('reset-btn-container').style.marginTop = '16px';
+                    this.textContent = '返回';
                     // 清空表单和提示
                     document.getElementById('new-password').value = '';
                     document.getElementById('confirm-password').value = '';
@@ -607,6 +640,7 @@
                     document.getElementById('new-password').classList.remove('success', 'error');
                     document.getElementById('confirm-password').classList.remove('success', 'error');
                     document.getElementById('query-result').innerHTML = '';
+                    document.getElementById('query-result').style.display = '';
                     alertEl.innerHTML = '';
                     // 收起区域
                     document.getElementById('reset-section').classList.remove('visible');
@@ -621,9 +655,25 @@
                         noPasswordMode = false;
                         queryPerformed = false;
                     } else {
+                        // 恢复首页状态
+                        queryPerformed = false;
+                        noPasswordMode = false;
+                        document.getElementById('query-btn').style.display = '';
+                        document.getElementById('reset-btn-full').style.display = 'none';
+                        document.getElementById('query-hint').style.display = '';
+                        document.querySelector('.account-info').style.marginBottom = '';
+                        // 恢复 show-reset-btn 到原位
+                        const resetFull = document.getElementById('reset-btn-full');
+                        if (document.getElementById('show-reset-btn').parentElement.id === 'reset-btn-container') {
+                            resetFull.parentNode.insertBefore(document.getElementById('show-reset-btn'), resetFull.nextSibling);
+                        }
+                        document.getElementById('show-reset-btn').removeAttribute('style');
+                        document.getElementById('show-reset-btn').className = 'reset-link-btn';
+                        document.getElementById('show-reset-btn').textContent = '修改密码';
+                        document.getElementById('reset-btn-container').innerHTML = '';
+                        document.getElementById('reset-btn-container').style.marginTop = '';
                         document.getElementById('reset-section').querySelector('.section-title').textContent = '修改密码';
                         document.getElementById('reset-btn').textContent = '修改密码';
-                        document.getElementById('show-reset-btn').textContent = '修改密码';
                     }
                 } else {
                     alertEl.innerHTML = '<div class="alert alert-error">' + escapeHtml(data.error) + '</div>';
@@ -672,10 +722,10 @@
                     const p = data.data;
                     resultDiv.innerHTML = `
                         <div class="query-result">
-                            <div class="form-group">
-                                <label style="font-size:15px; color:#666;">密码:</label>
-                                <div class="result-group">
-                                    <div class="input-wrapper">
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <div class="result-group" style="align-items: center;">
+                                    <label style="font-size:15px; color:#666; white-space: nowrap; display: inline; margin: 0;">密码:</label>
+                                    <div class="input-wrapper" style="flex: 1; min-width: 0;">
                                         <input type="password" id="query-password" readonly>
                                         <button type="button" class="toggle-btn" id="toggle-query-btn">显示</button>
                                     </div>
