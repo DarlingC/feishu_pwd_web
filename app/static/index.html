@@ -655,7 +655,8 @@
                     noPasswordMode = false;
                     document.getElementById('query-btn').style.display = 'none';
                     document.getElementById('reset-btn-full').style.display = 'none';
-                    document.querySelector('.account-info').style.marginBottom = '12px';
+                    document.querySelector('.account-info').style.marginBottom = '6px';
+                    document.getElementById('query-hint').style.display = 'none';
                     // 移动 show-reset-btn 到底部右方
                     const sectionVisible = document.getElementById('reset-section').classList.contains('visible');
                     document.getElementById('show-reset-btn').textContent = sectionVisible ? '收起' : '修改密码';
