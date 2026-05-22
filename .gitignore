@@ -89,3 +89,6 @@ logs/
 *.xlsx
 *.csv
 account_mapping.json
+
+# 数据库文件
+*.db
