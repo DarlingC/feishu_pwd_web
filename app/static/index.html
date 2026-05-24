@@ -48,12 +48,39 @@
             }
             .form-group input { font-size: 16px; }
         }
-        .welcome {
-            font-size: 17px;
-            color: #333;
-            margin-bottom: 20px;
+        .account-info {
+            font-size: 15px;
+            color: #666;
+            margin-bottom: 18px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
-        .welcome strong { color: #1890ff; }
+        .account-info strong { color: #333; }
+        .account-copy-btn {
+            padding: 8px 16px;
+            background: white;
+            border: 1px solid #d9d9d9;
+            border-radius: 6px;
+            color: #666;
+            font-size: 14px;
+            cursor: pointer;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+        .account-copy-btn.copied { background-color: #f6ffed; border-color: #b7eb8f; color: #52c41a; }
+        .tips-box {
+            font-size: 12px;
+            color: #888;
+            background: #fafafa;
+            border: 1px solid #eee;
+            border-radius: 6px;
+            padding: 10px 14px;
+            line-height: 1.8;
+            margin-bottom: 14px;
+        }
+        .tips-box .tips-label { color: #666; font-weight: 500; }
+        .tips-box .sep { color: #d9d9d9; margin: 0 6px; }
         .section-title { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
         .section-desc { font-size: 14px; color: #999; margin-bottom: 14px; }
         .form-group { margin-bottom: 16px; }
@@ -130,18 +157,29 @@
         .loading p { margin-top: 16px; color: #666; }
         .error-page { text-align: center; padding: 48px 24px; }
         .error-page p { color: #333; font-size: 18px; line-height: 1.8; }
-        .hint { margin-top: 20px; padding: 12px; background: #f5f5f5; border-radius: 6px; font-size: 15px; color: #666; }
         .update-time { font-size: 12px; color: #999; margin-top: 6px; }
         .validation-msg { font-size: 12px; margin-top: 3px; }
         .validation-msg.error { color: #ff4d4f; }
         .validation-msg.success { color: #52c41a; }
         .divider { border-top: 1px solid #e8e8e8; margin: 20px 0; }
-        .action-buttons { display: flex; gap: 12px; }
-        .action-buttons .btn { flex: 1; }
-        .reset-section { display: none; margin-top: 20px; }
+        .action-buttons { display: flex; flex-direction: column; gap: 12px; }
+        #query-btn { width: 100%; }
+        .reset-section { display: none; margin-top: 12px; }
         .reset-section.visible { display: block; }
-        .account-info { font-size: 15px; color: #666; margin-bottom: 12px; }
-        .account-info strong { color: #333; }
+        .reset-link-btn {
+            background: none;
+            border: none;
+            color: #1890ff;
+            font-size: 14px;
+            cursor: pointer;
+            padding: 0;
+            text-align: right;
+            width: auto;
+            float: right;
+            display: inline-block;
+        }
+        .reset-link-btn:hover { text-decoration: underline; }
+        .query-hint { font-size: 13px; color: #999; padding: 4px 0; }
     </style>
 </head>
 <body>
@@ -153,6 +191,8 @@
         const API_BASE = '/pas';
 
         let currentUser = null;
+        let noPasswordMode = false;
+        let queryPerformed = false;
 
         function escapeHtml(str) {
             return String(str)
@@ -242,7 +282,6 @@
                 '<div class="container">' +
                     '<div class="error-page">' +
                         '<p>' + escapeHtml(message) + '</p>' +
-                        '<div class="hint">请确保从飞书应用入口访问此页面</div>' +
                     '</div>' +
                 '</div>';
         }
@@ -344,21 +383,25 @@
             const adUsername = user.ad_account || '请联系IT';
 
             document.getElementById('app').innerHTML = `
-                <div class="container">
-                    <div class="welcome">欢迎，<strong>${escapeHtml(user.name)}</strong></div>
-
-                    <div id="reset-alert"></div>
-
-                    <div class="action-buttons">
-                        <button class="btn btn-outline" id="query-btn">查询密码</button>
-                        <button class="btn btn-primary" id="show-reset-btn">修改密码</button>
+                <div class="container" xmlns="http://www.w3.org/1999/html">
+                    <div class="tips-box">
+                        <span class="tips-label">内网密码适用于：</span> WiFi：Source-Unifi、已入域电脑开机密码、共享文件夹 database、公司 Wiki、公司 VPN（如有）、版本文件夹 BuildServer（如有）、发版工具 Gitlab（如有）、打包控制台 TeamCity（如有）、仓库 SVN（如有）、仓库 P4V（如有）
                     </div>
+                    <div class="account-info">账号:<strong id="ad-username"></strong><button class="account-copy-btn" id="account-copy-btn">复制</button></div>
+
+                    <div id="reset-success-hint"></div>
+                    <button class="btn btn-outline" id="query-btn">查询密码</button>
+                    <div class="query-hint" id="query-hint"></div>
+                    <button class="btn btn-outline" id="reset-btn-full" style="display:none;">重置密码</button>
+                    <button class="reset-link-btn" id="show-reset-btn">修改密码</button>
+                    <div style="clear: both;"></div>
+
+                    <div id="query-result"></div>
 
                     <div class="reset-section" id="reset-section">
                         <div class="divider"></div>
                         <div class="section-title">修改密码</div>
-                        <div class="section-desc">下边账号应与 WiFi: Source-Unifi 登录账号相同，如有问题请联系王晨</div>
-                        <div class="account-info">账号：<strong id="ad-username"></strong></div>
+                        <div id="reset-alert"></div>
                         <form id="reset-form">
                             <div class="form-group">
                                 <label>新密码</label>
@@ -379,12 +422,35 @@
                             <button type="submit" class="btn btn-primary" id="reset-btn" disabled>修改密码</button>
                         </form>
                     </div>
-
-                    <div id="query-result"></div>
+                    <div id="reset-btn-container"></div>
                 </div>
             `;
 
             document.getElementById('ad-username').textContent = adUsername || '未获取到';
+
+            // 复制账号按钮
+            document.getElementById('account-copy-btn').addEventListener('click', async function() {
+                const username = document.getElementById('ad-username').textContent;
+                try {
+                    if (navigator.clipboard && navigator.clipboard.writeText) {
+                        await navigator.clipboard.writeText(username);
+                    } else {
+                        const ta = document.createElement('textarea');
+                        ta.value = username;
+                        ta.style.position = 'fixed'; ta.style.left = '-9999px';
+                        document.body.appendChild(ta);
+                        ta.select();
+                        document.execCommand('copy');
+                        document.body.removeChild(ta);
+                    }
+                    this.textContent = '已复制';
+                    this.classList.add('copied');
+                    setTimeout(() => {
+                        this.textContent = '复制';
+                        this.classList.remove('copied');
+                    }, 1500);
+                } catch (err) {}
+            });
 
             if (!adUsername) {
                 document.getElementById('reset-alert').innerHTML =
@@ -395,13 +461,80 @@
             // 修改密码按钮：展开/收起
             document.getElementById('show-reset-btn').addEventListener('click', function() {
                 const section = document.getElementById('reset-section');
+                const resultDiv = document.getElementById('query-result');
                 if (section.classList.contains('visible')) {
+                    // 返回：重置到首页初始状态
                     section.classList.remove('visible');
+                    queryPerformed = false;
+                    noPasswordMode = false;
+                    document.getElementById('query-btn').style.display = '';
+                    document.getElementById('reset-btn-full').style.display = 'none';
+                    document.getElementById('query-hint').innerHTML = '';
+                    document.getElementById('query-hint').style.display = '';
+                    document.getElementById('reset-success-hint').innerHTML = '';
+                    document.getElementById('reset-alert').innerHTML = '';
+                    resultDiv.innerHTML = '';
+                    resultDiv.style.display = '';
+                    document.querySelector('.account-info').style.marginBottom = '';
+                    // 恢复 show-reset-btn 到原位
+                    const resetFull = document.getElementById('reset-btn-full');
+                    resetFull.parentNode.insertBefore(this, resetFull.nextSibling);
+                    this.removeAttribute('style');
+                    this.className = 'reset-link-btn';
                     this.textContent = '修改密码';
+                    document.getElementById('reset-btn-container').innerHTML = '';
+                    document.getElementById('reset-btn-container').style.marginTop = '';
+                    document.getElementById('reset-section').querySelector('.section-title').textContent = '修改密码';
+                    document.getElementById('reset-btn').textContent = '修改密码';
                 } else {
+                    // 展开：隐藏查询按钮和密码展示
                     section.classList.add('visible');
-                    this.textContent = '收起';
+                    document.getElementById('query-btn').style.display = 'none';
+                    if (queryPerformed && !noPasswordMode) {
+                        resultDiv.style.display = 'none';
+                    }
+                    // 移动按钮到右下角容器
+                    if (!queryPerformed) {
+                        document.getElementById('reset-btn-container').appendChild(this);
+                        document.querySelector('.account-info').style.marginBottom = '6px';
+                        document.getElementById('query-hint').style.display = 'none';
+                    }
+                    document.getElementById('reset-btn-container').style.marginTop = '16px';
+                    this.textContent = '返回';
+                    // 清空表单和提示
+                    document.getElementById('new-password').value = '';
+                    document.getElementById('confirm-password').value = '';
+                    document.getElementById('new-hint').textContent = '';
+                    document.getElementById('confirm-hint').textContent = '';
+                    document.getElementById('new-password').classList.remove('success', 'error');
+                    document.getElementById('confirm-password').classList.remove('success', 'error');
+                    document.getElementById('reset-alert').innerHTML = '';
+                    document.getElementById('reset-success-hint').innerHTML = '';
+                    // 根据模式更新标题和按钮文字
+                    const label = noPasswordMode ? '重置密码' : '修改密码';
+                    document.getElementById('reset-section').querySelector('.section-title').textContent = label;
+                    document.getElementById('reset-btn').textContent = label;
+                    updateResetButton();
                 }
+            });
+
+            // 全宽重置密码按钮（查询不到密码时出现）
+            document.getElementById('reset-btn-full').addEventListener('click', function() {
+                const section = document.getElementById('reset-section');
+                section.classList.add('visible');
+                this.style.display = 'none';
+                // 清空表单和提示
+                document.getElementById('new-password').value = '';
+                document.getElementById('confirm-password').value = '';
+                document.getElementById('new-hint').textContent = '';
+                document.getElementById('confirm-hint').textContent = '';
+                document.getElementById('new-password').classList.remove('success', 'error');
+                document.getElementById('confirm-password').classList.remove('success', 'error');
+                document.getElementById('reset-alert').innerHTML = '';
+                document.getElementById('reset-success-hint').innerHTML = '';
+                document.getElementById('reset-section').querySelector('.section-title').textContent = '重置密码';
+                document.getElementById('reset-btn').textContent = '重置密码';
+                updateResetButton();
             });
 
             document.querySelectorAll('.toggle-btn').forEach(btn => {
@@ -496,7 +629,10 @@
                 const data = await res.json();
 
                 if (data.success) {
-                    alertEl.innerHTML = '<div class="alert alert-success">密码修改成功</div>';
+                    const wasNoPassword = noPasswordMode;
+                    const successText = wasNoPassword ? '密码重置成功' : '密码修改成功';
+                    document.getElementById('reset-success-hint').innerHTML = '<div class="alert alert-success">' + successText + '</div>';
+                    document.getElementById('query-hint').innerHTML = '';
                     document.getElementById('new-password').value = '';
                     document.getElementById('confirm-password').value = '';
                     document.getElementById('new-hint').textContent = '';
@@ -504,6 +640,41 @@
                     document.getElementById('new-password').classList.remove('success', 'error');
                     document.getElementById('confirm-password').classList.remove('success', 'error');
                     document.getElementById('query-result').innerHTML = '';
+                    document.getElementById('query-result').style.display = '';
+                    alertEl.innerHTML = '';
+                    // 收起区域
+                    document.getElementById('reset-section').classList.remove('visible');
+                    if (wasNoPassword) {
+                        // 场景1：成功后恢复查询密码按钮
+                        document.getElementById('reset-btn-full').style.display = 'none';
+                        document.getElementById('query-btn').style.display = '';
+                        document.getElementById('show-reset-btn').style.display = '';
+                        document.getElementById('show-reset-btn').textContent = '修改密码';
+                        document.getElementById('reset-section').querySelector('.section-title').textContent = '修改密码';
+                        document.getElementById('reset-btn').textContent = '修改密码';
+                        noPasswordMode = false;
+                        queryPerformed = false;
+                    } else {
+                        // 恢复首页状态
+                        queryPerformed = false;
+                        noPasswordMode = false;
+                        document.getElementById('query-btn').style.display = '';
+                        document.getElementById('reset-btn-full').style.display = 'none';
+                        document.getElementById('query-hint').style.display = '';
+                        document.querySelector('.account-info').style.marginBottom = '';
+                        // 恢复 show-reset-btn 到原位
+                        const resetFull = document.getElementById('reset-btn-full');
+                        if (document.getElementById('show-reset-btn').parentElement.id === 'reset-btn-container') {
+                            resetFull.parentNode.insertBefore(document.getElementById('show-reset-btn'), resetFull.nextSibling);
+                        }
+                        document.getElementById('show-reset-btn').removeAttribute('style');
+                        document.getElementById('show-reset-btn').className = 'reset-link-btn';
+                        document.getElementById('show-reset-btn').textContent = '修改密码';
+                        document.getElementById('reset-btn-container').innerHTML = '';
+                        document.getElementById('reset-btn-container').style.marginTop = '';
+                        document.getElementById('reset-section').querySelector('.section-title').textContent = '修改密码';
+                        document.getElementById('reset-btn').textContent = '修改密码';
+                    }
                 } else {
                     alertEl.innerHTML = '<div class="alert alert-error">' + escapeHtml(data.error) + '</div>';
                 }
@@ -511,7 +682,7 @@
                 alertEl.innerHTML = '<div class="alert alert-error">请求失败，请稍后重试</div>';
             } finally {
                 btn.disabled = false;
-                btn.textContent = '修改密码';
+                btn.textContent = noPasswordMode ? '重置密码' : '修改密码';
                 updateResetButton();
             }
         }
@@ -523,18 +694,38 @@
             btn.disabled = true;
             btn.textContent = '查询中...';
             resultDiv.innerHTML = '';
+            document.getElementById('query-hint').innerHTML = '';
+            document.getElementById('reset-success-hint').innerHTML = '';
 
             try {
                 const res = await fetch(API_BASE + '/api/ad/password/query');
                 const data = await res.json();
                 if (data.success && data.data) {
+                    queryPerformed = true;
+                    noPasswordMode = false;
+                    document.getElementById('query-btn').style.display = 'none';
+                    document.getElementById('reset-btn-full').style.display = 'none';
+                    document.querySelector('.account-info').style.marginBottom = '6px';
+                    document.getElementById('query-hint').style.display = 'none';
+                    // 移动 show-reset-btn 到底部右方
+                    const sectionVisible = document.getElementById('reset-section').classList.contains('visible');
+                    document.getElementById('show-reset-btn').textContent = sectionVisible ? '收起' : '修改密码';
+                    document.getElementById('show-reset-btn').style.display = '';
+                    document.getElementById('show-reset-btn').style.float = '';
+                    document.getElementById('show-reset-btn').style.textAlign = 'right';
+                    document.getElementById('show-reset-btn').style.width = 'auto';
+                    const container = document.getElementById('reset-btn-container');
+                    container.innerHTML = '';
+                    container.appendChild(document.getElementById('show-reset-btn'));
+                    document.getElementById('reset-section').querySelector('.section-title').textContent = '修改密码';
+                    document.getElementById('reset-btn').textContent = '修改密码';
                     const p = data.data;
                     resultDiv.innerHTML = `
                         <div class="query-result">
-                            <div class="form-group">
-                                <label>已存储的密码</label>
-                                <div class="result-group">
-                                    <div class="input-wrapper">
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <div class="result-group" style="align-items: center;">
+                                    <label style="font-size:15px; color:#666; white-space: nowrap; display: inline; margin: 0;">密码:</label>
+                                    <div class="input-wrapper" style="flex: 1; min-width: 0;">
                                         <input type="password" id="query-password" readonly>
                                         <button type="button" class="toggle-btn" id="toggle-query-btn">显示</button>
                                     </div>
@@ -545,14 +736,22 @@
                         </div>
                     `;
                     document.getElementById('query-password').value = p.password;
-                    document.getElementById('update-time').textContent = '最后修改时间：' + new Date(p.updatedAt).toLocaleString('zh-CN');
+                    document.getElementById('update-time').textContent = '最后一次修改时间：' + new Date(p.updatedAt).toLocaleString('zh-CN');
 
                     document.getElementById('toggle-query-btn').addEventListener('click', function() {
                         togglePassword('query-password');
                     });
                     document.getElementById('copy-btn').addEventListener('click', copyPassword);
                 } else {
-                    resultDiv.innerHTML = '<div class="alert alert-error">' + escapeHtml(data.error || '请在本页面修改密码后再查询') + '</div>';
+                    queryPerformed = true;
+                    noPasswordMode = true;
+                    document.getElementById('query-hint').innerHTML = '<div class="alert alert-error">您的初始密码已无法查询，请重新设置密码。</div>';
+                    document.getElementById('query-btn').style.display = 'none';
+                    document.getElementById('reset-btn-full').style.display = 'block';
+                    document.getElementById('show-reset-btn').style.display = 'none';
+                    document.getElementById('reset-section').querySelector('.section-title').textContent = '重置密码';
+                    document.getElementById('reset-btn').textContent = '重置密码';
+                    document.getElementById('reset-btn-container').innerHTML = '';
                 }
             } catch (err) {
                 resultDiv.innerHTML = '<div class="alert alert-error">查询失败，请稍后重试</div>';
@@ -599,11 +798,11 @@
         async function init() {
             try {
                 const user = await getFeishuUser();
-                document.title = 'AD 密码管理';
+                document.title = '内网密码';
                 showHome(user);
             } catch (err) {
                 console.error('初始化失败:', err);
-                document.title = 'AD密码管理';
+                document.title = '内网密码';
                 showError(err.message);
             }
         }
