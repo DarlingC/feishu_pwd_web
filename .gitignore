@@ -89,3 +89,4 @@ logs/
 *.xlsx
 *.csv
 account_mapping.json
+.cozeproj/reduction
