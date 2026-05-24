@@ -443,10 +443,35 @@ def get_password(user_id: str, user_account: str) -> dict:
 
 @app.route('/')
 def index():
-    """主页"""
+    """入口页面（飞书环境检测 + JSSDK 授权）"""
     response = app.send_static_file('index.html')
     response.headers['Cache-Control'] = 'no-store'
     return response
+
+
+@app.route('/home')
+def home():
+    """主功能页面（需登录后访问）"""
+    if 'user_id' not in session:
+        return jsonify({'error': '未授权'}), 401
+    response = app.send_static_file('home.html')
+    response.headers['Cache-Control'] = 'no-store'
+    return response
+
+
+@app.route('/api/session/check', methods=['GET'])
+def check_session():
+    """检查用户 session 是否有效"""
+    if 'user_id' in session:
+        email = session.get('email', '')
+        return jsonify({
+            'valid': True,
+            'user_id': session['user_id'],
+            'user_name': session.get('user_name', ''),
+            'email': email,
+            'user_account': get_user_account(email)
+        })
+    return jsonify({'valid': False}), 401
 
 
 with app.app_context():
