@@ -160,9 +160,6 @@ def get_valid_tenant_access_token():
     return None
 
 
-
-
-
 @app.route('/api/feishu/appid', methods=['GET'])
 def get_appid():
     """返回飞书应用ID"""
@@ -264,7 +261,7 @@ def get_user_account(email: str) -> str:
     email_prefix = email.split('@')[0] if email else ''
     if not email_prefix:
         return ''
-    
+
     mapping = load_account_mapping()
     if email_prefix in mapping:
         return mapping[email_prefix]
@@ -380,8 +377,10 @@ def ad_reset_password(user_account: str, new_password: str) -> dict:
                 # AD 常见密码策略拒绝码：19=CONSTRAINT_VIOLATION, 53=UNWILLING_TO_PERFORM
                 if result_code in (19, 53):
                     if message and '0000052D' in message:
-                        return {'success': False, 'message': '密码不符合复杂度要求（需含大写字母、小写字母、数字或特殊字符中的至少三种）'}
-                    return {'success': False, 'message': 'AD域拒绝此次密码修改（可能触发了密码策略限制，如复杂度、密码历史、最短使用期限等），请更换密码后重试'}
+                        return {'success': False,
+                                'message': '密码不符合复杂度要求（需含大小写字母、数字或特殊字符中的至少三种，且不能包含用户名），请更换密码后重试'}
+                    return {'success': False,
+                            'message': '系统拒绝此次密码修改（可能触发了密码策略限制，如复杂度、密码历史、最短使用期限等），请更换密码后重试'}
                 else:
                     return {'success': False, 'message': f'修改失败: {description or "未知错误"}'}
 
