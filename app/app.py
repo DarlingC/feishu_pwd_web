@@ -377,13 +377,11 @@ def ad_reset_password(user_account: str, new_password: str) -> dict:
                 description = conn.result.get('description', '')
                 message = conn.result.get('message', '')
                 logger.warning(f"密码修改失败, result={result_code}, description={description}, message={message}")
-                # AD 常见密码策略拒绝码
-                if result_code == 19:  # CONSTRAINT_VIOLATION
+                # AD 常见密码策略拒绝码：19=CONSTRAINT_VIOLATION, 53=UNWILLING_TO_PERFORM
+                if result_code in (19, 53):
                     if message and '0000052D' in message:
                         return {'success': False, 'message': '密码不符合复杂度要求（需含大写字母、小写字母、数字或特殊字符中的至少三种）'}
-                    return {'success': False, 'message': '密码不符合要求，请更换密码后重试'}
-                elif result_code == 53:  # UNWILLING_TO_PERFORM
-                    return {'success': False, 'message': '拒绝此次密码修改（可能触发了密码策略限制，如密码历史、最短使用期限等），请更换密码后重试'}
+                    return {'success': False, 'message': 'AD域拒绝此次密码修改（可能触发了密码策略限制，如复杂度、密码历史、最短使用期限等），请更换密码后重试'}
                 else:
                     return {'success': False, 'message': f'修改失败: {description or "未知错误"}'}
 
