@@ -293,6 +293,7 @@
 
             if (!confirmPwd) {
                 hint.textContent = '';
+                hint.className = 'validation-msg';
                 return false;
             }
 
@@ -300,11 +301,17 @@
                 hint.textContent = '密码不一致';
                 hint.className = 'validation-msg error';
                 return false;
-            } else {
-                hint.textContent = '';
-                hint.className = 'validation-msg';
-                return true;
             }
+
+            if (confirmPwd.length < 8) {
+                hint.textContent = '密码长度不足8位';
+                hint.className = 'validation-msg error';
+                return false;
+            }
+
+            hint.textContent = '';
+            hint.className = 'validation-msg';
+            return true;
         }
 
         function showHome(user) {
