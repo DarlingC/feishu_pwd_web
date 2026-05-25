@@ -289,18 +289,30 @@
         function validatePassword(password) {
             const errors = [];
 
+            // 长度检查
             if (password.length < 8) {
                 errors.push("密码长度至少8位");
+            } else if (password.length > 20) {
+                errors.push("密码长度不能超过20位");
             }
 
+            // 四类字符（空格不计入任何类别）
             let categories = 0;
             if (/[A-Z]/.test(password)) categories++;
             if (/[a-z]/.test(password)) categories++;
             if (/[0-9]/.test(password)) categories++;
-            if (/[^A-Za-z0-9]/.test(password)) categories++;
+            if (/[^A-Za-z0-9 ]/.test(password)) categories++;  // 非字母数字且非空格
 
             if (categories < 3) {
-                errors.push("需包含至少3种：大写字母、小写字母、数字、特殊字符");
+                errors.push("需包含至少3种：大写字母、小写字母、数字、特殊字符（空格不计）");
+            }
+
+            // 用户名检查（不能包含用户的帐户名，不区分大小写）
+            if (currentUser) {
+                const username = currentUser.ad_account || '';
+                if (username && password.toLowerCase().includes(username.toLowerCase())) {
+                    errors.push("密码不能含有账号");
+                }
             }
 
             return {
