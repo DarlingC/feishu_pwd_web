@@ -290,27 +290,19 @@
             const newPwd = document.getElementById('new-password').value;
             const confirmPwd = document.getElementById('confirm-password').value;
             const hint = document.getElementById('confirm-hint');
-            const input = document.getElementById('confirm-password');
 
             if (!confirmPwd) {
-                input.classList.remove('error', 'success');
                 hint.textContent = '';
                 return false;
             }
 
             if (confirmPwd !== newPwd) {
                 hint.textContent = '密码不一致';
-                hint.classList.remove('success');
-                hint.classList.add('error');
-                input.classList.remove('success');
-                input.classList.add('error');
+                hint.className = 'validation-msg error';
                 return false;
             } else {
-                hint.textContent = '密码一致';
-                hint.classList.remove('error');
-                hint.classList.add('success');
-                input.classList.remove('error');
-                input.classList.add('success');
+                hint.textContent = '';
+                hint.className = 'validation-msg';
                 return true;
             }
         }
