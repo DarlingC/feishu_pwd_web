@@ -2,7 +2,6 @@ import os
 import sqlite3
 import time
 import threading
-import re
 import json
 from datetime import datetime
 import requests
@@ -161,18 +160,7 @@ def get_valid_tenant_access_token():
     return None
 
 
-def validate_password_complexity(password: str) -> bool:
-    """后端同步校验密码复杂度：至少8位，包含大写、小写、数字、特殊字符中的3种"""
-    if len(password) < 8:
-        return False
 
-    count = 0
-    if re.search(r"[a-z]", password): count += 1  # 包含小写
-    if re.search(r"[A-Z]", password): count += 1  # 包含大写
-    if re.search(r"\d", password): count += 1  # 包含数字
-    if re.search(r"[!@#$%^&*(),.?\":{}|<>]", password): count += 1  # 包含特殊字符
-
-    return count >= 3
 
 
 @app.route('/api/feishu/appid', methods=['GET'])
@@ -302,9 +290,6 @@ def reset_password():
     if len(new_password) < 8:
         return jsonify({'error': '密码长度不能少于8位'}), 400
 
-    if not validate_password_complexity(new_password):
-        return jsonify({'error': '密码不符合复杂度要求（需含大小写字母、数字或特殊字符中的三种）'}), 400
-
     # 强制从 Session 中获取可信信息
     user_id = session['user_id']
     user_name = session['user_name']
@@ -388,7 +373,19 @@ def ad_reset_password(user_account: str, new_password: str) -> dict:
             if conn.result['result'] == 0:
                 return {'success': True, 'message': '密码修改成功'}
             else:
-                return {'success': False, 'message': f"修改失败: {conn.result.get('description', '未知错误')}"}
+                result_code = conn.result['result']
+                description = conn.result.get('description', '')
+                message = conn.result.get('message', '')
+                logger.warning(f"密码修改失败, result={result_code}, description={description}, message={message}")
+                # AD 常见密码策略拒绝码
+                if result_code == 19:  # CONSTRAINT_VIOLATION
+                    if message and '0000052D' in message:
+                        return {'success': False, 'message': '密码不符合复杂度要求（需含大写字母、小写字母、数字或特殊字符中的至少三种）'}
+                    return {'success': False, 'message': '密码不符合要求，请更换密码后重试'}
+                elif result_code == 53:  # UNWILLING_TO_PERFORM
+                    return {'success': False, 'message': '拒绝此次密码修改（可能触发了密码策略限制，如密码历史、最短使用期限等），请更换密码后重试'}
+                else:
+                    return {'success': False, 'message': f'修改失败: {description or "未知错误"}'}
 
     except LDAPException as e:
         logger.error(f"LDAP操作异常: {str(e)}")

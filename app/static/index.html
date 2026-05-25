@@ -567,11 +567,7 @@
             const newPwd = document.getElementById('new-password').value;
             const confirmPwd = document.getElementById('confirm-password').value;
             const btn = document.getElementById('reset-btn');
-
-            const isNewValid = validatePassword(newPwd).valid;
-            const isConfirmMatch = newPwd && confirmPwd && newPwd === confirmPwd;
-
-            btn.disabled = !(newPwd && confirmPwd && isNewValid && isConfirmMatch);
+            btn.disabled = !(newPwd && confirmPwd && newPwd === confirmPwd);
         }
 
         function togglePassword(inputId) {
@@ -607,9 +603,8 @@
                 return;
             }
 
-            const validation = validatePassword(newPassword);
-            if (!validation.valid) {
-                alertEl.innerHTML = '<div class="alert alert-error">' + escapeHtml(validation.message) + '</div>';
+            if (newPassword.length < 8) {
+                alertEl.innerHTML = '<div class="alert alert-error">密码长度至少8位</div>';
                 return;
             }
 
