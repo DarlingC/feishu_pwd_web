@@ -287,6 +287,9 @@ def reset_password():
     if len(new_password) < 8:
         return jsonify({'error': '密码长度不能少于8位'}), 400
 
+    if len(new_password) > 20:
+        return jsonify({'error': '密码长度不能超过20位'}), 400
+
     # 强制从 Session 中获取可信信息
     user_id = session['user_id']
     user_name = session['user_name']

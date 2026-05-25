@@ -309,6 +309,12 @@
                 return false;
             }
 
+            if (confirmPwd.length > 20) {
+                hint.textContent = '密码长度不能超过20位';
+                hint.className = 'validation-msg error';
+                return false;
+            }
+
             hint.textContent = '';
             hint.className = 'validation-msg';
             return true;
@@ -499,7 +505,7 @@
             const newPwd = document.getElementById('new-password').value;
             const confirmPwd = document.getElementById('confirm-password').value;
             const btn = document.getElementById('reset-btn');
-            btn.disabled = !(newPwd.length >= 8 && confirmPwd && newPwd === confirmPwd);
+            btn.disabled = !(newPwd.length >= 8 && newPwd.length <= 20 && confirmPwd && newPwd === confirmPwd);
         }
 
         function togglePassword(inputId) {
